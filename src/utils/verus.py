@@ -189,8 +189,8 @@ class VEval:
         # with open(verus_output, "w", encoding="utf-8") as f:
         #     json.dump(sorted_errors, f, ensure_ascii=False, indent=4)
 
-        self.logger.warning(
-            f"\033[1mPass Rate: {self.success_number}/{self.total_number}\033[0m\n"
+        self.logger.terminal(
+            f"\033[1mFile-level Pass Rate: {self.success_number}/{self.total_number}\033[0m\n"
         )
 
         sorted_errors = dict(
@@ -480,6 +480,52 @@ class Verus:
             f"Total verified file number: {total_verified_file_num}/{total_file_name}"
         )
         print(f"Total file number: {total_file_name}")
+
+    def count_success_rate_of_function_level_per_file(
+        self, translated_rust_file, verus_file, lang_lib
+    ):
+        """Return total_verified_func_num and total_func_name"""
+        total_verified_func_num = 0
+        total_func_name = 0
+        with open(translated_rust_file, "r") as f:
+            source_code = f.read().encode("utf8")
+        RUST_LANGUAGE = Language(lang_lib, "rust")
+        parser = Parser()
+        parser.set_language(RUST_LANGUAGE)
+        tree = parser.parse(source_code)
+        root_node = tree.root_node
+        function_names = []
+
+        def extract_functions(node):
+            if node.type == "function_item":
+                for child in node.children:
+                    if child.type == "identifier":
+                        function_names.append(child.text.decode("utf-8"))
+
+            for child in node.children:
+                extract_functions(child)
+
+        extract_functions(root_node)
+
+        with open(verus_file, "r") as original_file:
+            content = original_file.read()
+
+        with tempfile.NamedTemporaryFile(
+            delete=False, mode="w", newline="", encoding="utf-8"
+        ) as temp_file:
+            temp_file.write(content)
+            temp_file_path = temp_file.name
+
+        for func_name in function_names:
+            total_func_name += 1
+            _, _, returncode = self.verify_file_in_function_level(
+                rust_file=temp_file_path, func_name=func_name
+            )
+            if returncode == 0:
+                total_verified_func_num += 1
+
+        os.remove(temp_file_path)
+        return total_verified_func_num, total_func_name
 
     def count_success_rate_of_function_level(
         self,

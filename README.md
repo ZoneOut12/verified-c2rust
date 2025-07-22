@@ -7,6 +7,8 @@ This repository contains dataset and source code for verified program migration 
 - `transpiled_rust`: contains the transpiled Rust code.
 - `RQ1_result`, `RQ3_result`: contains main experimental results of our research questions.
 
+As RQ2 primarily involves manual analysis of the benchmarks and their migration outcomes produced by our framework, it does not have a dedicated directory.
+
 ## Pre-requisites
 **Set up the Python environment:**
 1. Install `conda`:
@@ -134,7 +136,7 @@ Specifically, we provide three ways to run the c-to-rust translation:
 
         `<base_url>` is the base URL of the LLM API (for non-OpenAI endpoints).
 
-To enable the ablation study (as discussed in RQ1) of the type-guided specification migration component, we offer the `--type-guidance` option, defaulting to true. Users can explicitly specify `--type-guidance false` as needed.
+To enable the ablation study (as discussed in RQ1) of the type-guided specification migration component, we offer the `--type-guidance` option, defaulting to true. Users can explicitly specify `--type-guidance false` as needed. For instance, use `python main.py --type-guidance false` to disable type guidance.
 
 ## ⚠️Note
-If you choose not to use our pre-translated results and instead specify your own LLM, the translation quality may vary. In some cases, limitations of the LLM may lead to incomplete or incorrect translations, which could cause unexpected runtime failures.
+If you choose not to use our pre-translated results and instead specify your own LLM, the translation quality may vary, potentially leading to changes in migration results. In some cases, limitations of the LLM may lead to incomplete or incorrect translations, which could cause unexpected runtime failures.

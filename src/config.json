@@ -1,5 +1,5 @@
 {
-    "dataset_txt":"../data/dataset_path/supported_benchmark.txt",
+    "dataset_txt": "../data/dataset_path/supported_benchmark.txt",
     "result_dir": "../result",
     "verus": "~/verus-x86-linux/verus",
     "log_file": "../log/run.log",

@@ -330,7 +330,7 @@ class DataCollector:
         if total_files > 0:
             average_loc = total_lines / total_files  # Calculate average LoC
             print("-" * 10)
-            print(f"Dataset Path: {txt_path}")
+            print(f"Dataset Path: {txt_file_path}")
             print(f"total_files: {total_files}")
             print(f"Average LoC: {average_loc}")  # Print the result
             print("-" * 10)

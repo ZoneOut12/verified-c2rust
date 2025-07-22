@@ -1,5 +1,5 @@
 from utils import AttrDict
-import json, subprocess, argparse, sys, os, tempfile, shutil
+import json, subprocess, argparse, sys, os, tempfile, shutil, re
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run the migration framework.")
@@ -114,4 +114,8 @@ if __name__ == "__main__":
     )
 
     shutil.rmtree(temp_dir)
-    print(result.stderr)
+
+    log_pattern = re.compile(r"^\d{4}-\d{2}-\d{2}")
+    for line in result.stderr.splitlines():
+        if log_pattern.match(line):
+            print(line)

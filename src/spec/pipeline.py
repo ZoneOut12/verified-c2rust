@@ -1,4 +1,4 @@
-import os, argparse, json, shutil
+import os, argparse, json, shutil, tempfile
 from logger import Logger
 from extract import SpecExtractor, MyException
 from transform import SpecTransformer, TransformError
@@ -8,7 +8,7 @@ from command import VerusFmt, ClangFormatter
 from counter import TransformErrorCounter
 from specdetector import SpecDetector
 from agents import Transpiler
-from utils import VEval, Rustc
+from utils import VEval, Rustc, Verus
 from prompt import transpile_prompt, repair_prompt
 from types import SimpleNamespace
 
@@ -98,6 +98,8 @@ class Pipeline:
         transform_error_files = {}
         verus_success_files = []
         verus_fail_files = []
+        total_func_num = 0
+        verified_func_num = 0
 
         # local_llm = args.local_llm_path
         api_key = args.api_key
@@ -209,12 +211,16 @@ class Pipeline:
             success, errors = Rustc().execute(file_path=rust_file)
             if not success:
                 logger.error(
-                    f'After **{repair_round_threshold}** repair rounds of LLM, Rustc still failed on "{file_path}"!\n'
+                    f'After **{repair_round_threshold}** repair rounds of LLM, Rustc still failed on translated "{file_path}"!\n'
                 )
                 rustc_fail_list.append(file_path)
                 continue
             else:
-                logger.info(f'Rustc successfully compiled "{file_path}"!\n')
+                logger.info(f'Rustc successfully compiled translated "{file_path}"!\n')
+
+            with tempfile.NamedTemporaryFile(mode="w+", delete=False) as temp_rust_file:
+                temp_rust_file_path = temp_rust_file.name
+            shutil.copyfile(rust_file, temp_rust_file_path)
 
             transformer = SpecTransformer(
                 file_path=file_path,
@@ -294,6 +300,15 @@ class Pipeline:
                 Pipeline.copy_file(file_to_verify, fail_file_path)
             veval.get_error_message()
 
+            cur_verified_func_num, cur_total_func_num = Verus(
+                verus_path=verus_path, logger=None
+            ).count_success_rate_of_function_level_per_file(
+                temp_rust_file_path, file_to_verify, lang_lib
+            )
+            total_func_num += cur_total_func_num
+            verified_func_num += cur_verified_func_num
+            os.remove(temp_rust_file_path)
+
         # Print the statistics about non-migratable specifications
         # non_migratable_count = transform_error_counter.get_counts()
         # non_migratable_count.pop("UnsupportedType", None)
@@ -301,10 +316,10 @@ class Pipeline:
         # logger.error(
         #     f"Collected statistics on the first non-migratable specification type encountered in each file containing unsupported specifications:\n{non_migratable_count}\n"
         # )
-        logger.error(
+        logger.terminal(
             f"Number of files that have non-migratable specifications: {len(non_migratable_files)}\n"
         )
-        logger.error(
+        logger.terminal(
             f"Number of files that failed to compile after translation: {len(rustc_fail_list)}\n"
         )
 
@@ -331,6 +346,10 @@ class Pipeline:
             "verus_fail_files": verus_fail_files,
         }
 
+        logger.terminal(
+            f"\033[1mFunction-level Pass Rate: {verified_func_num}/{total_func_num}\033[0m\n"
+        )
+
         with open(
             os.path.join(result_dir, "verus_result.json"), "w", encoding="utf-8"
         ) as f:
@@ -341,7 +360,7 @@ class Pipeline:
         ) as f:
             json.dump(missing_spec_files, f, indent=4, ensure_ascii=False)
 
-        logger.warning(f'Results are stored in "{result_dir}".\n')
+        logger.terminal(f'Results are stored in "{result_dir}".\n')
 
     def Local_LLM_main_with_translation(**kwargs):
         args = SimpleNamespace(**kwargs)
@@ -365,6 +384,8 @@ class Pipeline:
         transform_error_files = {}
         verus_success_files = []
         verus_fail_files = []
+        total_func_num = 0
+        verified_func_num = 0
 
         local_llm = args.local_llm_path
         transpiler = Transpiler(model=local_llm, logger=logger)
@@ -471,12 +492,16 @@ class Pipeline:
             success, errors = Rustc().execute(file_path=rust_file)
             if not success:
                 logger.error(
-                    f'After **{repair_round_threshold}** repair rounds of LLM, Rustc still failed on "{file_path}"!\n'
+                    f'After **{repair_round_threshold}** repair rounds of LLM, Rustc still failed on translated "{file_path}"!\n'
                 )
                 rustc_fail_list.append(file_path)
                 continue
             else:
-                logger.info(f'Rustc successfully compiled "{file_path}"!\n')
+                logger.info(f'Rustc successfully compiled translated "{file_path}"!\n')
+
+            with tempfile.NamedTemporaryFile(mode="w+", delete=False) as temp_rust_file:
+                temp_rust_file_path = temp_rust_file.name
+            shutil.copyfile(rust_file, temp_rust_file_path)
 
             transformer = SpecTransformer(
                 file_path=file_path,
@@ -556,6 +581,15 @@ class Pipeline:
                 Pipeline.copy_file(file_to_verify, fail_file_path)
             veval.get_error_message()
 
+            cur_verified_func_num, cur_total_func_num = Verus(
+                verus_path=verus_path, logger=None
+            ).count_success_rate_of_function_level_per_file(
+                temp_rust_file_path, file_to_verify, lang_lib
+            )
+            total_func_num += cur_total_func_num
+            verified_func_num += cur_verified_func_num
+            os.remove(temp_rust_file_path)
+
         # Print the statistics about non-migratable specifications
         # non_migratable_count = transform_error_counter.get_counts()
         # non_migratable_count.pop("UnsupportedType", None)
@@ -563,10 +597,10 @@ class Pipeline:
         # logger.error(
         #     f"Collected statistics on the first non-migratable specification type encountered in each file containing unsupported specifications:\n{non_migratable_count}\n"
         # )
-        logger.error(
+        logger.terminal(
             f"Number of files that have non-migratable specifications: {len(non_migratable_files)}\n"
         )
-        logger.error(
+        logger.terminal(
             f"Number of files that failed to compile after translation: {len(rustc_fail_list)}\n"
         )
         # Save the error statistics to a JSON file
@@ -592,6 +626,10 @@ class Pipeline:
             "verus_fail_files": verus_fail_files,
         }
 
+        logger.terminal(
+            f"\033[1mFunction-level Pass Rate: {verified_func_num}/{total_func_num}\033[0m\n"
+        )
+
         with open(
             os.path.join(result_dir, "verus_result.json"), "w", encoding="utf-8"
         ) as f:
@@ -602,7 +640,7 @@ class Pipeline:
         ) as f:
             json.dump(missing_spec_files, f, indent=4, ensure_ascii=False)
 
-        logger.warning(f'Results are stored in "{result_dir}".\n')
+        logger.terminal(f'Results are stored in "{result_dir}".\n')
 
     def LLM_main_without_translation(**kwargs):
         args = SimpleNamespace(**kwargs)
@@ -626,6 +664,8 @@ class Pipeline:
         transform_error_files = {}
         verus_success_files = []
         verus_fail_files = []
+        total_func_num = 0
+        verified_func_num = 0
 
         cache_dir = args.tranpiled_rust_dir
         missing_spec_files = {}
@@ -693,6 +733,10 @@ class Pipeline:
             cached_rust_file = os.path.join(cache_dir, dir_part, rs_filename)
             with open(cached_rust_file, "r") as src, open(rust_file, "w") as dst:
                 dst.write(src.read())
+
+            with tempfile.NamedTemporaryFile(mode="w+", delete=False) as temp_rust_file:
+                temp_rust_file_path = temp_rust_file.name
+            shutil.copyfile(rust_file, temp_rust_file_path)
 
             transformer = SpecTransformer(
                 file_path=file_path,
@@ -767,6 +811,15 @@ class Pipeline:
                 Pipeline.copy_file(file_to_verify, fail_file_path)
             veval.get_error_message()
 
+            cur_verified_func_num, cur_total_func_num = Verus(
+                verus_path=verus_path, logger=None
+            ).count_success_rate_of_function_level_per_file(
+                temp_rust_file_path, file_to_verify, lang_lib
+            )
+            total_func_num += cur_total_func_num
+            verified_func_num += cur_verified_func_num
+            os.remove(temp_rust_file_path)
+
         # Print the statistics about non-migratable specifications
         # non_migratable_count = transform_error_counter.get_counts()
         # non_migratable_count.pop("UnsupportedType", None)
@@ -774,7 +827,7 @@ class Pipeline:
         # logger.error(
         #     f"Collected statistics on the first non-migratable specification type encountered in each file containing unsupported specifications:\n{non_migratable_count}\n"
         # )
-        logger.error(
+        logger.terminal(
             f"Number of files that have non-migratable specifications: {len(non_migratable_files)}\n"
         )
 
@@ -800,6 +853,10 @@ class Pipeline:
             "verus_fail_files": verus_fail_files,
         }
 
+        logger.terminal(
+            f"\033[1mFunction-level Pass Rate: {verified_func_num}/{total_func_num}\033[0m\n"
+        )
+
         with open(
             os.path.join(result_dir, "verus_result.json"), "w", encoding="utf-8"
         ) as f:
@@ -810,7 +867,7 @@ class Pipeline:
         ) as f:
             json.dump(missing_spec_files, f, indent=4, ensure_ascii=False)
 
-        logger.warning(f'Results are stored in "{result_dir}".\n')
+        logger.terminal(f'Results are stored in "{result_dir}".\n')
 
 
 if __name__ == "__main__":

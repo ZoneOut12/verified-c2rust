@@ -52,13 +52,28 @@ class Logger:
 
         # Create a console handler to output to the terminal
         console_handler = logging.StreamHandler()
-        console_handler.setLevel(logging.WARNING)
+        console_handler.setLevel(logging.CRITICAL + 1)
         console_handler.setFormatter(
             logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
         )
 
-        # Add the console handler to the logger
+        # Add (silent) console handler
         logger.addHandler(console_handler)
+
+        def terminal(msg):
+            record = logging.LogRecord(
+                name=logger.name,
+                level=logging.INFO,
+                pathname="<terminal>",
+                lineno=0,
+                msg=msg,
+                args=(),
+                exc_info=None,
+            )
+            file_handler.emit(record)
+            console_handler.emit(record)
+
+        logger.terminal = terminal
 
         return logger
 
