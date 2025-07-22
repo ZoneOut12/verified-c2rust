@@ -1,0 +1,10 @@
+{
+    "dataset_txt":"../data/dataset_path/supported_benchmark.txt",
+    "result_dir": "../result",
+    "verus": "~/verus-x86-linux/verus",
+    "log_file": "../log/run.log",
+    "repair_round_threshold": "3",
+    "temperature": "0.2",
+    "max_tokens": "2048",
+    "top_p": "0.7"
+}
