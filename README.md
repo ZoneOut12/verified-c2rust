@@ -10,12 +10,15 @@ This repository contains dataset and source code for verified program migration 
 As RQ2 primarily involves manual analysis of the benchmarks and their migration outcomes produced by our framework, it does not have a dedicated directory.
 
 ## Pre-requisites
+Our experiments are conducted on Ubuntu. To configure the environment, basic commands like `wget`, `curl`, and `unzip` should be available.
+
 **Set up the Python environment:**
 1. Install `conda`:
     ```bash
     cd ~
     wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
     bash Miniconda3-latest-Linux-x86_64.sh
+    source ~/miniconda3/bin/activate
     conda init
     ```
 2. Switch to the `verified-c2rust` directory, and create the virtual environment used in our experiments:
