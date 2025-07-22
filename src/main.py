@@ -87,6 +87,7 @@ if __name__ == "__main__":
     with open(json_file_path, "r", encoding="utf-8") as file:
         data = json.load(file)
     config = AttrDict(data)
+
     result = subprocess.run(
         [
             "python",
@@ -113,9 +114,11 @@ if __name__ == "__main__":
         text=True,
     )
 
+    if result.returncode == 99:
+        print(result.stdout)
+    else:
+        log_pattern = re.compile(r"^\d{4}-\d{2}-\d{2}")
+        for line in result.stderr.splitlines():
+            if log_pattern.match(line):
+                print(line)
     shutil.rmtree(temp_dir)
-
-    log_pattern = re.compile(r"^\d{4}-\d{2}-\d{2}")
-    for line in result.stderr.splitlines():
-        if log_pattern.match(line):
-            print(line)

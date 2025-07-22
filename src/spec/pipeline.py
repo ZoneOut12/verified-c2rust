@@ -1,4 +1,4 @@
-import os, argparse, json, shutil, tempfile
+import os, argparse, json, shutil, tempfile, sys, traceback, io
 from logger import Logger
 from extract import SpecExtractor, MyException
 from transform import SpecTransformer, TransformError
@@ -948,9 +948,20 @@ if __name__ == "__main__":
     mode = args.mode if hasattr(args, "mode") else "cached"
     all_args = vars(args)
     filtered_args = {k: v for k, v in all_args.items() if k != "mode"}
-    if mode == "cached":
-        Pipeline.LLM_main_without_translation(**filtered_args)
-    elif mode == "local":
-        Pipeline.Local_LLM_main_with_translation(**filtered_args)
-    elif mode == "api":
-        Pipeline.API_LLM_main_with_translation(**filtered_args)
+    temp_io_file = tempfile.NamedTemporaryFile(mode="w", delete=False)
+    temp_io_file_path = temp_io_file.name
+    old_stdout = sys.stdout
+    sys.stdout = temp_io_file
+    try:
+        if mode == "cached":
+            Pipeline.LLM_main_without_translation(**filtered_args)
+        elif mode == "local":
+            Pipeline.Local_LLM_main_with_translation(**filtered_args)
+        elif mode == "api":
+            Pipeline.API_LLM_main_with_translation(**filtered_args)
+        os.remove(temp_io_file_path)
+    except Exception as e:
+        sys.stdout = old_stdout
+        os.remove(temp_io_file_path)
+        sys.stdout.write(traceback.format_exc())
+        sys.exit(99)
