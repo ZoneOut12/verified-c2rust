@@ -88,7 +88,7 @@ First, make sure you are in the `migration` Conda virtual environment.
 
 ### Configuration
 Before running the framework, you need to fill in the required parameters in the `src/config.json` file:
-- `"dataset_txt":` a `.txt` file listing source C file paths, one per line. We provide several `.txt` files within the `data/dataset_path` directory.
+- `"dataset_txt":` a `.txt` file listing source C file paths, one per line. We provide several `.txt` files within the `data/dataset_path` directory. Among them, `supported_benchmark.txt` stores the file paths of 160 migratable C programs.
 - `"result_dir":` the directory where the output results of the framework execution are stored.
 - `"verus":` the path to the Verus binary used for verifying Rust. If you're following the steps for Verus installation, the default path for the Verus binary will be `~/verus-x86-linux/verus`.
 - `"log_file":` the path to the log file used to record the framework's execution details.
