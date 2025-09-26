@@ -1,0 +1,6 @@
+|                                                              | Qwen3-235B-A22B | DeepSeek-R1 | Llama-3.3-70B-Instruct | Qwen2.5-Coder-32B-instruct | Llama-3-8B-Instruct | Qwen2.5-Coder-7B-Instruct |
+| ------------------------------------------------------------ | --------------- | ----------- | ---------------------- | -------------------------- | ------------------- | ------------------------- |
+| Post-translation Compilation Success Rate(w/o iterative repair) | 147/160         | 145/160     | 147/160                | 136/160                    | 120/160             | 134/160                   |
+| Post-translation Compilation Success Rate(w/ iterative repair) | 160/160         | 160/160     | 160/160                | 158/160                    | 150/160             | 152/160                   |
+| File-level Pass Rate(w/o Human)                              | **90/160**      | 89/160      | 80/160                 | 84/160                     | 42/160              | 79/160                    |
+| Function-level Pass Rate(w/o Human)                          | **154/291**     | 153/291     | 144/291                | 141/291                    | 58/291              | 130/291                   |
